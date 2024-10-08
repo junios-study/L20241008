@@ -46,6 +46,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	TObjectPtr<UInputAction> IA_Look;
 
+	UPROPERTY(EditAnywhere, Category = "Input")
+	TObjectPtr<UInputAction> IA_Zoom;
+
 	UPROPERTY(EditAnywhere, Category = "Components")
 	TObjectPtr<USpringArmComponent> SpringArm;
 
@@ -55,4 +58,6 @@ public:
 	void Move(const FInputActionValue& Value);
 
 	void Look(const FInputActionValue& Value);
+
+	void Zoom(const FInputActionValue& Value);
 };

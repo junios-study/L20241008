@@ -9,6 +9,8 @@
 #include "Components/CapsuleComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 // Sets default values
 ATPSCharacter::ATPSCharacter()
@@ -76,6 +78,7 @@ void ATPSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 		EIC->BindAction(IA_Look, ETriggerEvent::Triggered, this, &ATPSCharacter::Look);
 		EIC->BindAction(IA_Jump, ETriggerEvent::Triggered, this, &ATPSCharacter::Jump);
 		EIC->BindAction(IA_Jump, ETriggerEvent::Canceled, this, &ATPSCharacter::StopJumping);
+		EIC->BindAction(IA_Zoom, ETriggerEvent::Triggered, this, &ATPSCharacter::Zoom);
 	}
 
 }
@@ -83,16 +86,33 @@ void ATPSCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 void ATPSCharacter::Move(const FInputActionValue& Value)
 {
 	FVector2D Temp =  Value.Get<FVector2D>();
-	FVector Direction(FVector(Temp.X, Temp.Y, 0));
+	FVector Direction(FVector(Temp.Y, Temp.X, 0));
 	Direction.Normalize();
-	AddMovementInput(Direction);
+
+	FRotator AbsoluteRotation = GetControlRotation();
+	FRotator ForwardRotation(0, AbsoluteRotation.Yaw, 0);
+
+	FVector ForwardVectorXYPlaneBase = UKismetMathLibrary::GetForwardVector(ForwardRotation);
+
+	FVector RightVectorXYPlaneBase = UKismetMathLibrary::GetRightVector(ForwardRotation);
+
+	AddMovementInput(ForwardVectorXYPlaneBase * Temp.Y);
+	AddMovementInput(RightVectorXYPlaneBase * Temp.X);
 }
 
 void ATPSCharacter::Look(const FInputActionValue& Value)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Look %f %f"), Value.Get<FVector2D>().X, Value.Get<FVector2D>().Y);
+	//UE_LOG(LogTemp, Warning, TEXT("Look %f %f"), Value.Get<FVector2D>().X, Value.Get<FVector2D>().Y);
 	AddControllerPitchInput(Value.Get<FVector2D>().Y);
 	AddControllerYawInput(Value.Get<FVector2D>().X);
 //	AddActorLocaRotation()
+}
+
+void ATPSCharacter::Zoom(const FInputActionValue& Value)
+{
+	
+	SpringArm->TargetArmLength -= (Value.Get<float>() * 60.0f);
+
+	SpringArm->TargetArmLength = FMath::Clamp(SpringArm->TargetArmLength, 100, 200);
 }
 
